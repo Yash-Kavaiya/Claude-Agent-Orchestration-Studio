@@ -1,0 +1,240 @@
+/**
+ * =====================================
+ *     CLAUDE AGENT PLATFORM DESIGN
+ * =====================================
+ * 
+ * Project: Claude Agent SDK Platform
+ * Type: Visual Workflow Builder & Agent Orchestration
+ * 
+ * DESIGN PHILOSOPHY
+ * -----------------
+ * Core Principle: Warm professionalism with Claude's signature approachability
+ * Design Style: Modern Minimal with Claude-inspired warmth
+ * Emotion Goal: Professional confidence with intuitive clarity
+ * 
+ * COLOR SYSTEM (CLAUDE-INSPIRED HSL FORMAT)
+ * -------------
+ * Primary Orange: 18 70% 60% - Claude's signature warm accent
+ * Background Warm: 35 20% 98% - Subtle warm off-white
+ * Background Dark: 30 5% 15% - Refined warm gray
+ * Text Primary: 30 8% 12% - Warm dark text
+ * Text Secondary: 30 6% 45% - Muted warm gray
+ * 
+ * LAYOUT SYSTEM
+ * ------------
+ * Canvas: Infinite scrollable workspace
+ * Sidebar: Collapsible tool palette and project explorer
+ * Properties: Context-sensitive configuration panel
+ * Header: Global navigation and project controls
+ * 
+ * INTERACTIONS
+ * ------------
+ * Transitions: 200-300ms with ease-out curves
+ * Hover States: Subtle elevation and color shifts
+ * Focus States: Warm orange accent ring
+ * Drag States: Semi-transparent with elevation
+ * ====================================
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Claude-inspired warm palette */
+    --background: 35 20% 98%;
+    --foreground: 30 8% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 30 8% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 8% 12%;
+    --primary: 18 70% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 35 15% 95%;
+    --secondary-foreground: 30 8% 12%;
+    --muted: 35 12% 96%;
+    --muted-foreground: 30 6% 45%;
+    --accent: 18 70% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 35 15% 88%;
+    --input: 35 15% 88%;
+    --ring: 18 70% 60%;
+    --radius: 0.5rem;
+    
+    /* Canvas-specific colors */
+    --canvas-bg: 35 15% 97%;
+    --canvas-grid: 35 10% 92%;
+    --canvas-connection: 18 70% 60%;
+    --node-bg: 0 0% 100%;
+    --node-border: 35 15% 85%;
+    --node-hover: 18 30% 98%;
+    --node-active: 18 70% 60%;
+    
+    /* Sidebar colors */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 30 8% 12%;
+    --sidebar-primary: 18 70% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 35 15% 95%;
+    --sidebar-accent-foreground: 30 8% 12%;
+    --sidebar-border: 35 15% 88%;
+    --sidebar-ring: 18 70% 60%;
+  }
+  
+  .dark {
+    /* Dark mode with warm undertones */
+    --background: 30 5% 15%;
+    --foreground: 35 10% 95%;
+    --card: 30 5% 18%;
+    --card-foreground: 35 10% 95%;
+    --popover: 30 5% 18%;
+    --popover-foreground: 35 10% 95%;
+    --primary: 18 70% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 30 5% 22%;
+    --secondary-foreground: 35 10% 95%;
+    --muted: 30 5% 20%;
+    --muted-foreground: 30 6% 65%;
+    --accent: 18 70% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 30 5% 25%;
+    --input: 30 5% 25%;
+    --ring: 18 70% 60%;
+    
+    /* Canvas dark mode */
+    --canvas-bg: 30 5% 12%;
+    --canvas-grid: 30 5% 20%;
+    --canvas-connection: 18 70% 60%;
+    --node-bg: 30 5% 18%;
+    --node-border: 30 5% 25%;
+    --node-hover: 18 20% 25%;
+    --node-active: 18 70% 60%;
+    
+    /* Sidebar dark mode */
+    --sidebar-background: 30 5% 18%;
+    --sidebar-foreground: 35 10% 95%;
+    --sidebar-primary: 18 70% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 30 5% 22%;
+    --sidebar-accent-foreground: 35 10% 95%;
+    --sidebar-border: 30 5% 25%;
+    --sidebar-ring: 18 70% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Custom scrollbars */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-muted/30;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+}
+
+@layer components {
+  /* Canvas-specific styles */
+  .canvas-grid {
+    background-color: hsl(var(--canvas-bg));
+    background-image: 
+      linear-gradient(hsl(var(--canvas-grid)) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--canvas-grid)) 1px, transparent 1px);
+    background-size: 20px 20px;
+    @apply transition-colors duration-200;
+  }
+  
+  .canvas-drop-zone {
+    background-color: hsl(var(--primary) / 0.02);
+  }
+  
+  /* Node styles */
+  .workflow-node {
+    background-color: var(--node-bg);
+    border: 1px solid var(--node-border);
+    @apply rounded-lg shadow-sm transition-all duration-200;
+  }
+  
+  .workflow-node:hover {
+    background-color: var(--node-hover);
+    @apply shadow-md border-primary/30;
+  }
+  
+  .workflow-node.selected {
+    @apply border-primary shadow-lg;
+  }
+  
+  .workflow-node.dragging {
+    @apply opacity-80 scale-105 shadow-xl;
+  }
+  
+  /* Connection lines */
+  .workflow-connection {
+    stroke: hsl(var(--canvas-connection));
+    stroke-width: 2;
+    fill: none;
+    marker-end: url(#arrowhead);
+    @apply transition-all duration-200;
+  }
+  
+  .workflow-connection:hover {
+    stroke: hsl(var(--primary));
+    stroke-width: 3;
+  }
+  
+  .workflow-connection-temp {
+    stroke: hsl(var(--primary));
+    stroke-width: 2;
+    stroke-dasharray: 5, 5;
+    fill: none;
+    opacity: 0.6;
+    animation: dash 1s linear infinite;
+  }
+  
+  @keyframes dash {
+    to {
+      stroke-dashoffset: -10;
+    }
+  }
+  
+  /* Sidebar animations */
+  .sidebar-item {
+    @apply transition-all duration-200 ease-out;
+  }
+  
+  .sidebar-item:hover {
+    @apply bg-sidebar-accent transform translate-x-1;
+  }
+}
+
+/* Custom CSS variables for canvas interactions */
+:root {
+  --canvas-bg: hsl(var(--canvas-bg));
+  --node-bg: hsl(var(--node-bg));
+  --node-border: hsl(var(--node-border));
+  --node-hover: hsl(var(--node-hover));
+  --node-active: hsl(var(--node-active));
+}
