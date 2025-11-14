@@ -9,8 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.db.session import async_session_maker
-# from app.core.auth import decode_access_token
-# from app.models.user import User
+from app.services.auth_service import AuthService
 
 
 # Security scheme
@@ -36,45 +35,35 @@ async def get_current_user(
     """
     Get current authenticated user from JWT token
     """
-    # TODO: Implement after auth system is built
-    # try:
-    #     token = credentials.credentials
-    #     payload = decode_access_token(token)
-    #     user_id = payload.get("sub")
-    #
-    #     if user_id is None:
-    #         raise HTTPException(
-    #             status_code=status.HTTP_401_UNAUTHORIZED,
-    #             detail="Could not validate credentials",
-    #         )
-    #
-    #     # Fetch user from database
-    #     user = await db.get(User, user_id)
-    #     if user is None:
-    #         raise HTTPException(
-    #             status_code=status.HTTP_401_UNAUTHORIZED,
-    #             detail="User not found",
-    #         )
-    #
-    #     if not user.is_active:
-    #         raise HTTPException(
-    #             status_code=status.HTTP_403_FORBIDDEN,
-    #             detail="User account is inactive",
-    #         )
-    #
-    #     return user
-    #
-    # except Exception as e:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_401_UNAUTHORIZED,
-    #         detail="Could not validate credentials",
-    #     )
+    try:
+        token = credentials.credentials
+        auth_service = AuthService(db)
 
-    # Placeholder for now
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Authentication not implemented yet",
-    )
+        user = await auth_service.get_user_from_token(token)
+
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User account is inactive",
+            )
+
+        return user
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 async def get_current_active_user(
@@ -105,11 +94,9 @@ async def get_optional_user(
 
     try:
         token = authorization.replace("Bearer ", "")
-        # payload = decode_access_token(token)
-        # user_id = payload.get("sub")
-        # user = await db.get(User, user_id)
-        # return user if user and user.is_active else None
-        return None  # Placeholder
+        auth_service = AuthService(db)
+        user = await auth_service.get_user_from_token(token)
+        return user if user and user.is_active else None
     except Exception:
         return None
 

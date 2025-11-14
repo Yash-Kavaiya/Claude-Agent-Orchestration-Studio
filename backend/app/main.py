@@ -11,6 +11,8 @@ from app.config import settings
 from app.middleware.error_handler import ErrorHandlerMiddleware
 from app.middleware.request_logger import RequestLoggerMiddleware
 from app.core.logging import setup_logging
+from app.core.rate_limit import limiter
+from app.api.v1 import auth as auth_router
 
 
 # Setup logging
@@ -66,6 +68,14 @@ app.add_middleware(
 # Custom Middleware
 app.add_middleware(ErrorHandlerMiddleware)
 app.add_middleware(RequestLoggerMiddleware)
+
+
+# Rate Limiter
+app.state.limiter = limiter
+
+
+# API Routes
+app.include_router(auth_router.router, prefix=f"{settings.API_V1_PREFIX}/auth", tags=["Authentication"])
 
 
 # Health Check Endpoints
