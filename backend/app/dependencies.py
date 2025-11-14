@@ -101,6 +101,17 @@ async def get_optional_user(
         return None
 
 
+async def get_current_user_ws(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get current authenticated user for WebSocket stats endpoints
+    Same as get_current_user but named separately for clarity
+    """
+    return await get_current_user(credentials, db)
+
+
 # Rate limiting dependency
 class RateLimiter:
     """

@@ -15,6 +15,7 @@ from app.models.node_execution import NodeExecution
 from app.models.agent import Agent
 from app.utils.dag_resolver import DAGResolver
 from app.schemas.execution import ExecutionCreate, WorkflowExecutionResponse
+from app.core.websocket import broadcast_execution_update, broadcast_node_update
 
 
 class ExecutionService:
@@ -236,6 +237,15 @@ class ExecutionService:
         await self.db.commit()
         await self.db.refresh(execution)
 
+        # Broadcast WebSocket event
+        await broadcast_execution_update(
+            str(execution.id),
+            execution.status,
+            execution.get_progress_percentage(),
+            execution.completed_nodes,
+            execution.total_nodes,
+        )
+
         return execution
 
     async def execute_workflow(
@@ -265,6 +275,15 @@ class ExecutionService:
         execution.started_at = datetime.utcnow()
         execution.add_log_entry("info", "Workflow execution started")
         await self.db.commit()
+
+        # Broadcast WebSocket event
+        await broadcast_execution_update(
+            str(execution.id),
+            execution.status,
+            execution.get_progress_percentage(),
+            execution.completed_nodes,
+            execution.total_nodes,
+        )
 
         try:
             # Get workflow
@@ -307,12 +326,31 @@ class ExecutionService:
                         execution.completed_nodes = len(completed_nodes)
                         await self.db.commit()
 
+                        # Broadcast progress update
+                        await broadcast_execution_update(
+                            str(execution.id),
+                            execution.status,
+                            execution.get_progress_percentage(),
+                            execution.completed_nodes,
+                            execution.total_nodes,
+                            node_id,
+                        )
+
             # Mark execution as completed
             execution.status = "completed"
             execution.completed_at = datetime.utcnow()
             execution.calculate_duration()
             execution.add_log_entry("info", "Workflow execution completed successfully")
             await self.db.commit()
+
+            # Broadcast completion event
+            await broadcast_execution_update(
+                str(execution.id),
+                execution.status,
+                100.0,
+                execution.completed_nodes,
+                execution.total_nodes,
+            )
 
             return {
                 "status": "completed",
@@ -328,6 +366,15 @@ class ExecutionService:
             execution.error_message = str(e)
             execution.add_log_entry("error", f"Workflow execution failed: {str(e)}")
             await self.db.commit()
+
+            # Broadcast failure event
+            await broadcast_execution_update(
+                str(execution.id),
+                execution.status,
+                execution.get_progress_percentage(),
+                execution.completed_nodes,
+                execution.total_nodes,
+            )
 
             raise
 
@@ -345,6 +392,16 @@ class ExecutionService:
         node_execution.started_at = datetime.utcnow()
         node_execution.add_log_entry("info", "Node execution started")
         await self.db.commit()
+
+        # Broadcast node started event
+        await broadcast_node_update(
+            str(workflow_execution.id),
+            str(node_execution.id),
+            node_execution.node_id,
+            node_execution.node_name,
+            node_execution.status,
+            "Node execution started",
+        )
 
         try:
             # Prepare input data from parent nodes
@@ -380,6 +437,16 @@ class ExecutionService:
             node_execution.add_log_entry("info", "Node execution completed")
             await self.db.commit()
 
+            # Broadcast node completed event
+            await broadcast_node_update(
+                str(workflow_execution.id),
+                str(node_execution.id),
+                node_execution.node_id,
+                node_execution.node_name,
+                node_execution.status,
+                "Node execution completed",
+            )
+
         except Exception as e:
             node_execution.status = "failed"
             node_execution.completed_at = datetime.utcnow()
@@ -388,6 +455,17 @@ class ExecutionService:
             node_execution.add_log_entry("error", f"Node execution failed: {str(e)}")
             workflow_execution.failed_nodes += 1
             await self.db.commit()
+
+            # Broadcast node failed event
+            await broadcast_node_update(
+                str(workflow_execution.id),
+                str(node_execution.id),
+                node_execution.node_id,
+                node_execution.node_name,
+                node_execution.status,
+                f"Node execution failed: {str(e)}",
+            )
+
             raise
 
     async def _execute_agent_node(
