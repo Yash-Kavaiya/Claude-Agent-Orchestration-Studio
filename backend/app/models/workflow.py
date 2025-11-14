@@ -59,6 +59,14 @@ class Workflow(BaseModel):
         UUID(as_uuid=True), nullable=True
     )
 
+    # Relationships
+    executions: Mapped[List["WorkflowExecution"]] = relationship(
+        "WorkflowExecution",
+        back_populates="workflow",
+        cascade="all, delete-orphan",
+        lazy="dynamic",
+    )
+
     # Indexes for performance
     __table_args__ = (
         Index("idx_workflow_user", "user_id"),

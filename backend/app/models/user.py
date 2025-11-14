@@ -3,7 +3,7 @@ User Model
 Represents authenticated users in the system
 """
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy import String, Boolean, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -35,6 +35,20 @@ class User(BaseModel):
     )
     last_login_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
+    )
+
+    # Relationships
+    workflow_executions: Mapped[List["WorkflowExecution"]] = relationship(
+        "WorkflowExecution",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="dynamic",
+    )
+    node_executions: Mapped[List["NodeExecution"]] = relationship(
+        "NodeExecution",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="dynamic",
     )
 
     def __repr__(self) -> str:
