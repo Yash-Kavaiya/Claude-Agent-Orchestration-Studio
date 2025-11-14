@@ -13,6 +13,8 @@ from app.middleware.request_logger import RequestLoggerMiddleware
 from app.core.logging import setup_logging
 from app.core.rate_limit import limiter
 from app.api.v1 import auth as auth_router
+from app.api.v1 import workflows as workflows_router
+from app.api.v1 import agents as agents_router
 
 
 # Setup logging
@@ -76,6 +78,8 @@ app.state.limiter = limiter
 
 # API Routes
 app.include_router(auth_router.router, prefix=f"{settings.API_V1_PREFIX}/auth", tags=["Authentication"])
+app.include_router(workflows_router.router, prefix=f"{settings.API_V1_PREFIX}/workflows", tags=["Workflows"])
+app.include_router(agents_router.router, prefix=f"{settings.API_V1_PREFIX}/agents", tags=["Agents"])
 
 
 # Health Check Endpoints
